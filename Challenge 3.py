@@ -9,7 +9,7 @@ n = 1
 y = 1
 
 def formula(x):
-    return (np.sqrt((x)**2 + y**2) / (C/n)) + (np.sqrt(((L) - (x))**2 + y**2) / (C/n))
+    return (np.sqrt((x)**2 + y**2) / (C/n)) + (np.sqrt((L - x)**2 + y**2) / (C/n))
 
 t = formula(x)
 
