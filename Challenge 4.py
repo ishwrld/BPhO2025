@@ -10,7 +10,7 @@ L0 = 2
 
 fig, ax = plt.subplots()
 plt.subplots_adjust(bottom=0.25)
-plt.title("Test for Snell's Law")
+plt.title("Snell's Law")
 plt.xlabel("Distance (m)")
 plt.ylabel("Time (s)")
 
