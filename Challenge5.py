@@ -19,7 +19,7 @@ def plot_reflection(original, reflected):
     axs[0].set_title("Original Image")
     axs[0].axis('off')
     
-    axs[1].imshow(reflected)
+    axs[1].imshow(reflected) 
     axs[1].set_title("Virtual Image (Mirror Reflection)")
     axs[1].axis('off')
     
