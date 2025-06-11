@@ -23,7 +23,7 @@ def challenge1A():
     n = calcSellmeier(wavelengths, a, b)
 
     plt.plot(wavelengths, n)
-    plt.title("Refractive index of crown glass")
+    plt.title("Refractive Index of Crown Glass")
     plt.xlabel("Wavelength (nm)")
     plt.ylabel("Refractive index, n")
     plt.show()
