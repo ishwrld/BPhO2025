@@ -1,31 +1,35 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider
-import math
 
-C = 345 
+C = 345
 n = 1
 y = 1
-L = 2
-
+L0 = 2
 
 fig, ax = plt.subplots()
-plt.subplots_adjust(bottom=0.25) 
+plt.subplots_adjust(bottom=0.25)
+plt.title("Fermat's Principle of Least Time")
+plt.xlabel("Distance (m)")
+plt.ylabel("Time (s)")
 
-x = np.linspace(0, L, 1000) #Plotting on x
-t = np.sqrt((x)**2 + y**2) / (C/n)+ np.sqrt((L - x)**2 + y**2) / (C/n) 
-#Plotting on y
+x = np.linspace(0, L0, 1000)
+t = np.sqrt(x**2 + y**2) / (C/n) + np.sqrt((L0 - x)**2 + y**2) / (C/n)
+line, = ax.plot(x, t, lw=2)
+ax.set_xlim(0, L0)
+ax.set_ylim(t.min() - t.min()**2 , t.max())
 
-line, = plt.plot(x, t, lw=2)
 ax_slider = plt.axes([0.25, 0.1, 0.65, 0.03])
-slider = Slider(ax_slider, 'Length', 1, 5, valinit=L, valstep=0.5)
+slider = Slider(ax_slider, 'Length L', 1, 5, valinit=L0, valstep=0.5)
 
 def update(val):
     L = slider.val
-    line.set_ydata(np.sqrt((x)**2 + y**2) / (C/n) + np.sqrt((L - x)**2 + y**2) / (C/n))
-    line.set_xdata(x)
+    x = np.linspace(0, L, 1000)
+    t = np.sqrt(x**2 + y**2) / (C/n) + np.sqrt((L - x)**2 + y**2) / (C/n)
+    line.set_data(x, t)
+    ax.set_xlim(0, L)
+    ax.set_ylim(t.min() - t.min()**2, t.max())
     fig.canvas.draw_idle()
 
 slider.on_changed(update)
-
 plt.show()
