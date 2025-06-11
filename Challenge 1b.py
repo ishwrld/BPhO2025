@@ -70,16 +70,7 @@ def formula(frequency):
     return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
 
 def chooseColour(freqs):
-    # rgb = np.empty((freqs.size, 3))
-    # rgb[(freqs >= 405) & (freqs < 480)] = [1, 0, 0]                 # Red
-    # rgb[(freqs >= 480) & (freqs < 510)] = [1, 127/255, 0]           # Orange
-    # rgb[(freqs >= 510) & (freqs < 530)] = [1, 1, 0]                 # Yellow
-    # rgb[(freqs >= 530) & (freqs < 600)] = [0, 1, 0]                 # Green
-    # rgb[(freqs >= 600) & (freqs < 620)] = [0, 1, 1]                 # Cyan
-    # rgb[(freqs >= 620) & (freqs < 680)] = [0, 0, 1]                 # Blue
-    # rgb[(freqs >= 680) & (freqs <= 790)] = [127/255, 0, 1]          # Violet
 
-    # return rgb
     rgb = np.empty((freqs.size))
     rgb[(freqs >= 405) & (freqs < 480)] = [1]                 # Red
     rgb[(freqs >= 480) & (freqs < 510)] = [0.8]           # Orange
