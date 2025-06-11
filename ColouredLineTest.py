@@ -70,27 +70,16 @@ def formula(frequency):
     return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
 
 def chooseColour(freqs):
-    # rgb = np.empty((freqs.size, 3))
-    # rgb[(freqs >= 405) & (freqs < 480)] = [1, 0, 0]                 # Red
-    # rgb[(freqs >= 480) & (freqs < 510)] = [1, 127/255, 0]           # Orange
-    # rgb[(freqs >= 510) & (freqs < 530)] = [1, 1, 0]                 # Yellow
-    # rgb[(freqs >= 530) & (freqs < 600)] = [0, 1, 0]                 # Green
-    # rgb[(freqs >= 600) & (freqs < 620)] = [0, 1, 1]                 # Cyan
-    # rgb[(freqs >= 620) & (freqs < 680)] = [0, 0, 1]                 # Blue
-    # rgb[(freqs >= 680) & (freqs <= 790)] = [127/255, 0, 1]          # Violet
-
-    # return rgb
-    rgb = np.empty((freqs.size))
-    rgb[(freqs >= 405) & (freqs < 480)] = [1]                 # Red
-    rgb[(freqs >= 480) & (freqs < 510)] = [0.8]           # Orange
-    rgb[(freqs >= 510) & (freqs < 530)] = [0.6]                 # Yellow
-    rgb[(freqs >= 530) & (freqs < 600)] = [0.4]                 # Green
-    rgb[(freqs >= 600) & (freqs < 620)] = [0.2]                 # Cyan
-    rgb[(freqs >= 620) & (freqs < 680)] = [0.1]                 # Blue
-    rgb[(freqs >= 680) & (freqs <= 790)] = [0]          # Violet
+    rgb = np.empty((freqs.size, 3))
+    rgb[(freqs >= 405) & (freqs < 480)] = [1, 0, 0]                 # Red
+    rgb[(freqs >= 480) & (freqs < 510)] = [1, 127/255, 0]           # Orange
+    rgb[(freqs >= 510) & (freqs < 530)] = [1, 1, 0]                 # Yellow
+    rgb[(freqs >= 530) & (freqs < 600)] = [0, 1, 0]                 # Green
+    rgb[(freqs >= 600) & (freqs < 620)] = [0, 1, 1]                 # Cyan
+    rgb[(freqs >= 620) & (freqs < 680)] = [0, 0, 1]                 # Blue
+    rgb[(freqs >= 680) & (freqs <= 790)] = [127/255, 0, 1]          # Violet
 
     return rgb
-
     
 
 
@@ -100,11 +89,6 @@ frequencies = np.linspace(405, 790, 1000)
 n = formula(frequencies)
 colour = chooseColour(frequencies) 
 
-# ax = plt.subplots()
-# plt.plot(frequencies, n)
-# plt.title("Refractive Index of Crown Glass")
-# plt.xlabel("Wavelength (nm)")
-# plt.ylabel("Refractive index, n")
 
 # Create a figure and plot the line on it
 fig1, ax1 = plt.subplots()
@@ -114,6 +98,8 @@ fig1.colorbar(lines)  # add a color legend
 # Set the axis limits and tick positions
 ax1.set_xlim(frequencies.min(), frequencies.max())
 ax1.set_ylim(n.min(), n.max())
+ax1.set_xticks((-1, 0, 1))
+ax1.set_yticks((-1, 0, 1))
 ax1.set_title("Refractive index of water")
 ax1.set_xlabel("Frequency (THz)")
 ax1.set_ylabel("Refractive index, n")
