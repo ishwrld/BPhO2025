@@ -105,7 +105,7 @@ def chooseColour(freq):
 
 # -------------- Create and show plot --------------
 # Some arbitrary function that gives x, y, and color values
-frequencies = np.linspace(405, 790, 1000)
+frequencies = np.linspace(390, 800, 1000)
 n = formula(frequencies)
 colour = np.array([chooseColour(f) for f in frequencies])
 
