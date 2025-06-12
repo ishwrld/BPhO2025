@@ -1,41 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+from PIL import Image
 
-def reflect_image_across_vertical(image):
-    """
-    Reflects an image across a vertical mirror (x = 0).
-    This is equivalent to flipping it horizontally.
-    """
-    return np.fliplr(image)
+fig, ax = plt.subplots()
 
-def plot_reflection(original, reflected):
-    """
-    Plots the original image and its reflected counterpart side by side.
-    """
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-    
-    axs[0].imshow(original)
-    axs[0].set_title("Original Image")
-    axs[0].axis('off')
-    
-    axs[1].imshow(reflected) 
-    axs[1].set_title("Virtual Image (Mirror Reflection)")
-    axs[1].axis('off')
-    
-    plt.tight_layout()
-    plt.show()
+ax.set_xlim(-6,6)
+ax.set_ylim(-6,6)
+ax.set_xlabel('X-axis')
+ax.set_ylabel('Y-axis')
+ax.axvline(x=0, color='purple', linestyle='--', linewidth=1.5)
+plt.title("Reflection in a Plane Mirror")
 
-def main():
-    # Load image (can be PNG, JPG, etc.)
-    image_path = 'object_image.png'  # Replace with your image filename
-    image = mpimg.imread(image_path)
-    
-    # Compute virtual image
-    virtual_image = reflect_image_across_vertical(image)
-    
-    # Plot both
-    plot_reflection(image, virtual_image)
+image_path = r"C:\Users\msesh\OneDrive\Documents\BPhO\Screenshot.png"
+img = Image.open(image_path)
+img_array = np.array(img)
+virtual_img_array = np.fliplr(img_array)
 
-if __name__ == "__main__":
-    main()
+ax.imshow(img_array, extent=[1, 5, -2, 2], zorder=1)
+ax.imshow(virtual_img_array, extent=[-5, -1, -2, 2], zorder=1)
+ax.text(2.05, 3, "object", color='red', fontsize=12)
+ax.text(-4, 3, "virtual image", color='green', fontsize=12)
+ax.grid(True, linestyle= ':')
+
+
+plt.show()
