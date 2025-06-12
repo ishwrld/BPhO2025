@@ -1,108 +1,54 @@
-import warnings
-
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from matplotlib.collections import LineCollection
+# Constants
+c = 3e8  # Speed of light in m/s
+wavelengths_nm = np.linspace(405, 790, 1000)
+wavelengths_um = wavelengths_nm / 1000  # Convert to micrometres
 
+# Cauchy parameters for water
+A = 1.322
+B = 1.589e-2
+C = 1.2e-4
 
-def colored_line(x, y, c, ax, **lc_kwargs):
-    """
-    Plot a line with a color specified along the line by a third value.
+# Refractive index
+n = A + B / wavelengths_um**2 + C / wavelengths_um**4
 
-    It does this by creating a collection of line segments. Each line segment is
-    made up of two straight lines each connecting the current (x, y) point to the
-    midpoints of the lines connecting the current point with its two neighbors.
-    This creates a smooth line with no gaps between the line segments.
+# Frequencies in THz
+frequencies = c / (wavelengths_nm * 1e-9) / 1e12  # in THz
 
-    Parameters
-    ----------
-    x, y : array-like
-        The horizontal and vertical coordinates of the data points.
-    c : array-like
-        The color values, which should be the same size as x and y.
-    ax : Axes
-        Axis object on which to plot the colored line.
-    **lc_kwargs
-        Any additional arguments to pass to matplotlib.collections.LineCollection
-        constructor. This should not include the array keyword argument because
-        that is set to the color argument. If provided, it will be overridden.
+# Function to map frequency to RGB
+def frequency_to_rgb(f):
+    if f < c / (790e-9) / 1e12:  # Lower than red
+        return [np.nan, np.nan, np.nan]
+    elif f < c / (680e-9) / 1e12:
+        return [127/255, 0, 1]  # Violet
+    elif f < c / (620e-9) / 1e12:
+        return [0, 0, 1]  # Blue
+    elif f < c / (600e-9) / 1e12:
+        return [0, 1, 1]  # Cyan
+    elif f < c / (530e-9) / 1e12:
+        return [0, 1, 0]  # Green
+    elif f < c / (510e-9) / 1e12:
+        return [1, 1, 0]  # Yellow
+    elif f < c / (480e-9) / 1e12:
+        return [1, 127/255, 0]  # Orange
+    elif f < c / (405e-9) / 1e12:
+        return [1, 0, 0]  # Red
+    else:
+        return [np.nan, np.nan, np.nan]  # UV
 
-    Returns
-    -------
-    matplotlib.collections.LineCollection
-        The generated line collection representing the colored line.
-    """
-    if "array" in lc_kwargs:
-        warnings.warn('The provided "array" keyword argument will be overridden')
+# Generate RGB colours for each frequency
+rgb_colours = np.array([frequency_to_rgb(f) for f in frequencies])
 
-    # Default the capstyle to butt so that the line segments smoothly line up
-    default_kwargs = {"capstyle": "butt"}
-    default_kwargs.update(lc_kwargs)
+# Plot with colour mapping
+fig, ax = plt.subplots()
+for i in range(len(frequencies) - 1):
+    if not np.isnan(rgb_colours[i]).any():
+        ax.plot(frequencies[i:i+2], n[i:i+2], color=rgb_colours[i], linewidth=2)
 
-    # Compute the midpoints of the line segments. Include the first and last points
-    # twice so we don't need any special syntax later to handle them.
-    x = np.asarray(x)
-    y = np.asarray(y)
-    x_midpts = np.hstack((x[0], 0.5 * (x[1:] + x[:-1]), x[-1]))
-    y_midpts = np.hstack((y[0], 0.5 * (y[1:] + y[:-1]), y[-1]))
-
-    # Determine the start, middle, and end coordinate pair of each line segment.
-    # Use the reshape to add an extra dimension so each pair of points is in its
-    # own list. Then concatenate them to create:
-    # [
-    #   [(x1_start, y1_start), (x1_mid, y1_mid), (x1_end, y1_end)],
-    #   [(x2_start, y2_start), (x2_mid, y2_mid), (x2_end, y2_end)],
-    #   ...
-    # ]
-    coord_start = np.column_stack((x_midpts[:-1], y_midpts[:-1]))[:, np.newaxis, :]
-    coord_mid = np.column_stack((x, y))[:, np.newaxis, :]
-    coord_end = np.column_stack((x_midpts[1:], y_midpts[1:]))[:, np.newaxis, :]
-    segments = np.concatenate((coord_start, coord_mid, coord_end), axis=1)
-
-    lc = LineCollection(segments, **default_kwargs)
-    lc.set_array(c)  # set the colors of each segment
-
-    return ax.add_collection(lc)
-
-
-def formula(frequency):
-    return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
-
-def chooseColour(freqs):
-    rgb = np.empty((freqs.size, 3))
-    rgb[(freqs >= 405) & (freqs < 480)] = [1, 0, 0]                 # Red
-    rgb[(freqs >= 480) & (freqs < 510)] = [1, 127/255, 0]           # Orange
-    rgb[(freqs >= 510) & (freqs < 530)] = [1, 1, 0]                 # Yellow
-    rgb[(freqs >= 530) & (freqs < 600)] = [0, 1, 0]                 # Green
-    rgb[(freqs >= 600) & (freqs < 620)] = [0, 1, 1]                 # Cyan
-    rgb[(freqs >= 620) & (freqs < 680)] = [0, 0, 1]                 # Blue
-    rgb[(freqs >= 680) & (freqs <= 790)] = [127/255, 0, 1]          # Violet
-
-    return rgb
-    
-
-
-# -------------- Create and show plot --------------
-# Some arbitrary function that gives x, y, and color values
-frequencies = np.linspace(405, 790, 1000)
-n = formula(frequencies)
-colour = chooseColour(frequencies) 
-
-
-# Create a figure and plot the line on it
-fig1, ax1 = plt.subplots()
-lines = colored_line(frequencies, n, colour, ax1, linewidth=10, cmap="rainbow")
-fig1.colorbar(lines)  # add a color legend
-
-# Set the axis limits and tick positions
-ax1.set_xlim(frequencies.min(), frequencies.max())
-ax1.set_ylim(n.min(), n.max())
-ax1.set_xticks((-1, 0, 1))
-ax1.set_yticks((-1, 0, 1))
-ax1.set_title("Refractive index of water")
-ax1.set_xlabel("Frequency (THz)")
-ax1.set_ylabel("Refractive index, n")
-
-plt.show()    
-
+ax.set_xlabel("Frequency (THz)")
+ax.set_ylabel("Refractive Index of Water")
+ax.set_title("Refractive Index vs Frequency (Coloured by Visible Spectrum)")
+ax.grid(True)
+plt.show()

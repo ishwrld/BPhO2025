@@ -69,18 +69,36 @@ def colored_line(x, y, c, ax, **lc_kwargs):
 def formula(frequency):
     return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
 
-def chooseColour(freqs):
+def chooseColour(freq):
+    if freq < 405:  # Lower than red
+        return [np.nan, np.nan, np.nan]
+    elif freq < 480:
+        return [1,0,0]  # Red
+    elif freq < 510:
+        return [1, 127/255, 0]  # Orange
+    elif freq < 530:
+        return [1, 1, 0]  # Yellow
+    elif freq < 600:
+        return [0, 1, 0]  # Green
+    elif freq < 620:
+        return [0, 1, 1]  # Cyan    
+    elif freq < 680:
+        return [0, 0, 1]  # Blue
+    elif freq < 790:
+        return [127/255, 0, 1]  # Violet
+    else:
+        return [np.nan, np.nan, np.nan]
 
-    rgb = np.empty((freqs.size))
-    rgb[(freqs >= 405) & (freqs < 480)] = [1]                 # Red
-    rgb[(freqs >= 480) & (freqs < 510)] = [0.8]           # Orange
-    rgb[(freqs >= 510) & (freqs < 530)] = [0.6]                 # Yellow
-    rgb[(freqs >= 530) & (freqs < 600)] = [0.4]                 # Green
-    rgb[(freqs >= 600) & (freqs < 620)] = [0.2]                 # Cyan
-    rgb[(freqs >= 620) & (freqs < 680)] = [0.1]                 # Blue
-    rgb[(freqs >= 680) & (freqs <= 790)] = [0]          # Violet
+    # rgb = np.empty((freqs.size))
+    # rgb[(freqs >= 405) & (freqs < 480)] = [1]                 # Red
+    # rgb[(freqs >= 480) & (freqs < 510)] = [0.85]           # Orange
+    # rgb[(freqs >= 510) & (freqs < 530)] = [0.72]                 # Yellow
+    # rgb[(freqs >= 530) & (freqs < 600)] = [0.6]                 # Green
+    # rgb[(freqs >= 600) & (freqs < 620)] = [0.35]                 # Cyan
+    # rgb[(freqs >= 620) & (freqs < 680)] = [0.13]                 # Blue
+    # rgb[(freqs >= 680) & (freqs <= 790)] = [(10270/11000+freqs*(-13/11000))]          # Violet
 
-    return rgb
+    # return rgb
 
     
 
@@ -89,7 +107,7 @@ def chooseColour(freqs):
 # Some arbitrary function that gives x, y, and color values
 frequencies = np.linspace(405, 790, 1000)
 n = formula(frequencies)
-colour = chooseColour(frequencies) 
+colour = np.array([chooseColour(f) for f in frequencies])
 
 # ax = plt.subplots()
 # plt.plot(frequencies, n)
@@ -98,16 +116,19 @@ colour = chooseColour(frequencies)
 # plt.ylabel("Refractive index, n")
 
 # Create a figure and plot the line on it
-fig1, ax1 = plt.subplots()
-lines = colored_line(frequencies, n, colour, ax1, linewidth=10, cmap="rainbow")
-fig1.colorbar(lines)  # add a color legend
+fig, ax = plt.subplots()
+for i in range(len(frequencies) - 1):
+    if not np.isnan(colour[i]).any():
+        ax.plot(frequencies[i:i+2], n[i:i+2], color=colour[i], linewidth=2)
+#lines = colored_line(frequencies, n, colour, ax1, linewidth=5, cmap="rainbow")
+#fig1.colorbar(lines)  # add a color legend
 
 # Set the axis limits and tick positions
-ax1.set_xlim(frequencies.min(), frequencies.max())
-ax1.set_ylim(n.min(), n.max())
-ax1.set_title("Refractive index of water")
-ax1.set_xlabel("Frequency (THz)")
-ax1.set_ylabel("Refractive index, n")
+ax.set_xlim(frequencies.min(), frequencies.max())
+ax.set_ylim(n.min(), n.max())
+ax.set_title("Refractive index of water")
+ax.set_xlabel("Frequency (THz)")
+ax.set_ylabel("Refractive index, n")
 
 plt.show()    
 

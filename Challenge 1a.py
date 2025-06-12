@@ -19,7 +19,7 @@ def challenge1A():
 
         return (1 + sumCoeff) ** 0.5
 
-    wavelengths = np.linspace(400, 800, 5)
+    wavelengths = np.linspace(400, 800, 100)
     n = calcSellmeier(wavelengths, a, b)
 
     plt.plot(wavelengths, n)
