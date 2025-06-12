@@ -14,21 +14,20 @@ plt.xlabel("Distance (m)")
 plt.ylabel("Time (s)")
 
 def getAngle(x):
-    return "Theta: " + str(round(abs(np.degrees(np.arctan(x/y))),2))
+    return "θ = " + str(round(abs(np.degrees(np.arctan(x/y))),2))
 
 x = np.linspace(0, L0, 1000)
 t = np.sqrt(x**2 + y**2) / (C/n) + np.sqrt((L0 - x)**2 + y**2) / (C/n)
 line, = ax.plot(x, t, lw=2)
-lowest, = ax.plot(x[np.argmin(t)], np.min(t), marker="x", ms=15)
+lowest, = ax.plot(x[np.argmin(t)], np.min(t), marker="x", ms=7, lw = 2, color="red")
 ax.set_xlim(0, L0)
 ax.set_ylim(t.min() - t.min()**2 , t.max())
 
 ax_slider = plt.axes([0.25, 0.1, 0.65, 0.03])
 slider = Slider(ax_slider, 'Length L', 1, 5, valinit=L0, valstep=0.1)
-text = ax.text(0.8, 1.1, getAngle(x[np.argmin(t)]),
-               fontsize=10,
-               transform=ax.transAxes,
-               backgroundcolor="xkcd:sand",
+text = ax.text(0.8, 1.025, getAngle(x[np.argmin(t)]),
+               fontsize=12,
+               transform=ax.transAxes
                )
 #
 
