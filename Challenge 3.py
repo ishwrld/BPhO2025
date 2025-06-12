@@ -29,7 +29,7 @@ text = ax.text(0.8, 1.025, getAngle(x[np.argmin(t)]),
                fontsize=12,
                transform=ax.transAxes
                )
-#
+
 
 def update(val):
     L = slider.val
