@@ -10,8 +10,7 @@ ax.set_xlabel('X-axis')
 ax.set_ylabel('Y-axis')
 ax.axvline(x=0, color='purple', linestyle='--', linewidth=1.5)
 plt.title("Reflection in a Plane Mirror")
-ax.text(2.2, 3, "Object", color='red', fontsize=12)
-ax.text(-4.25, 3, "Virtual Image", color='green', fontsize=12)
+
 ax.grid(True, linestyle=':')
 
 image_path = r"Einstein.jpg"
@@ -24,6 +23,12 @@ real_ex = [1, 5, -2, 2]
 
 virtual_image = ax.imshow(virtual_img_array, extent=virtual_ex, zorder=1)
 real_image = ax.imshow(img_array, extent=real_ex, zorder=1)
+
+objectTxt = ax.text(0.5*(real_ex[0]+real_ex[1]), real_ex[3]+0.6, "Object", color='red', fontsize=12,
+                    ha = "center", va = "top")
+virtualTxt = ax.text(0.5*(virtual_ex[0]+virtual_ex[1]), virtual_ex[3]+0.6, "Virtual Image",
+                      color='green', fontsize=12,
+                      ha = "center", va = "top")
 
 dragging = False
 
@@ -52,6 +57,7 @@ def on_motion(event):
             dy + height/2
         ]
         real_image.set_extent(real_ex)
+        objectTxt.set_position([dx, real_ex[3]+0.6])
 
         virtual_ex = [
             -real_ex[1],
@@ -60,6 +66,10 @@ def on_motion(event):
             real_ex[3]
         ]
         virtual_image.set_extent(virtual_ex)
+        virtualTxt.set_position([0.5*(virtual_ex[0]+virtual_ex[1]), virtual_ex[3]+0.6])
+
+
+
         fig.canvas.draw_idle()
 
 fig.canvas.mpl_connect('button_press_event', on_press)
