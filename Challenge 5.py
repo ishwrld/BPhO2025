@@ -14,7 +14,7 @@ ax.text(2.2, 3, "Object", color='red', fontsize=12)
 ax.text(-4.25, 3, "Virtual Image", color='green', fontsize=12)
 ax.grid(True, linestyle=':')
 
-image_path = r"C:\Users\msesh\OneDrive\Documents\BPhO\Screenshot.png"
+image_path = r"Einstein.jpg"
 img = Image.open(image_path)
 img_array = np.array(img)
 virtual_img_array = np.fliplr(img_array)
