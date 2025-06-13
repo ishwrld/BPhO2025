@@ -24,26 +24,6 @@ def chooseColour(freq):
     else:
         return [np.nan, np.nan, np.nan]  
 
-    # if freq < 405:  # Lower than red
-    #     return [np.nan, np.nan, np.nan]
-    # elif freq < 480:
-    #     return [1,0,0]  # Red
-    # elif freq < 510:
-    #     return [1, 127/255, 0]  # Orange
-    # elif freq < 530:
-    #     return [1, 1, 0]  # Yellow
-    # elif freq < 600:
-    #     return [0, 1, 0]  # Green
-    # elif freq < 620:
-    #     return [0, 1, 1]  # Cyan    
-    # elif freq < 680:
-    #     return [0, 0, 1]  # Blue
-    # elif freq < 790:
-    #     return [127/255, 0, 1]  # Violet
-    # else:
-    #     return [np.nan, np.nan, np.nan]   
-
-
 frequencies = np.linspace(390, 800, 1000)
 n = formula(frequencies)
 colour = np.array([chooseColour(f) for f in frequencies])
