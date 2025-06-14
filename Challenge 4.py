@@ -7,7 +7,9 @@ n = 1
 n2 = 1.5
 y = 1
 Y = 1
-L0 = 2
+L = 2
+c1 = 345
+c2 = 230
 
 fig, ax = plt.subplots()
 plt.subplots_adjust(bottom=0.25)
