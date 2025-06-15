@@ -47,7 +47,7 @@ def update(val):
     text.set_text(getAngle(x[np.argmin(t)]))
     ray.set_xdata([0, L/2, L])
     normal.set_xdata([L/2])
-    #ax2.set_xlim(0,L)
+    #ax2.set_xlim(0,L)  
     
     fig.canvas.draw_idle()
     #fig.canvas.flush_events()
