@@ -79,81 +79,125 @@
 # #print(virtual_img_array)
 
 # plt.show()
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib.image as mpimg
+# from matplotlib.patches import Ellipse
+# from scipy.ndimage import map_coordinates
+
+# # === Settings ===
+
+# f = 0.5    # focal length of lens
+# x_obj = 1.0  # x-position of object
+# scale = 0.5  # size scale for images
+
+# # === Load object image ===
+
+# img = mpimg.imread(r'Einstein.jpg')
+# H, W = img.shape[0], img.shape[1]
+
+# # === Physical coordinates for image ===
+
+# x_phys = np.linspace(-scale, scale, W)
+# y_phys = np.linspace(-scale, scale * H / W, H)
+
+# x_grid, y_grid = np.meshgrid(x_phys, y_phys)
+
+# # === Lens equation ===
+
+# X_new = -f * x_grid / (x_grid - f)
+# Y_new = (y_grid * X_new) / x_grid
+
+# # === Map back to pixel coordinates ===
+
+# X_idx = np.interp(X_new, x_phys, np.arange(W))
+# Y_idx = np.interp(Y_new, y_phys, np.arange(H))
+
+# X_idx_clipped = np.clip(X_idx, 0, W - 1)
+# Y_idx_clipped = np.clip(Y_idx, 0, H - 1)
+
+# coords = np.vstack([Y_idx_clipped.ravel(), X_idx_clipped.ravel()])
+
+# img_out = np.zeros_like(img)
+# for c in range(img.shape[2]):
+#     img_out[..., c] = map_coordinates(img[..., c], coords, order=1, mode='reflect').reshape(H, W)
+
+# # === Plot ===
+
+# fig, ax = plt.subplots(figsize=(8, 6))
+
+# # Original image at (x_obj, 0)
+# ax.imshow(img, extent=[x_obj - scale, x_obj + scale, -scale, scale], zorder=1)
+# ax.text(x_obj, scale + 0.1, r'$(x, y)$', ha='center', fontsize=12)
+
+# # Virtual image at X_obj
+# X_obj = -f * x_obj / (x_obj - f)
+# ax.imshow(img_out, extent=[X_obj - scale, X_obj + scale, -scale, scale], zorder=1)
+# ax.text(X_obj, -scale - 0.1, r'$(X, Y)$', ha='center', fontsize=12)
+
+# # Lens (ellipse)
+# lens = Ellipse((0, 0), width=0.2, height=3.0, edgecolor='blue', facecolor='none', lw=2)
+# ax.add_patch(lens)
+
+# # Focal points
+# ax.plot([f, -f], [0, 0], 'b*', markersize=12)
+
+# # Rays
+# # 1st ray → straight through center
+# ax.plot([x_obj, 0, X_obj], [0, 0, 0], 'r-', lw=1)
+# # 2nd ray → through top of object
+# ax.plot([x_obj, 0, X_obj], [scale, scale * 0.5, -scale], 'r-', lw=1)
+
+# # Labels and grid
+# ax.set_xlim(-3, 3)
+# ax.set_ylim(-2, 2)
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# ax.grid(True)
+# ax.set_title('Image of object in a converging lens')
+
+# plt.show()
+
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from matplotlib.patches import Ellipse
-from scipy.ndimage import map_coordinates
 
-# === Settings ===
+# Load image
+img = cv2.imread('Einstein.jpg')
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+h, w = img.shape[:2]
 
-f = 0.5    # focal length of lens
-x_obj = 1.0  # x-position of object
-scale = 0.5  # size scale for images
+# Define original and warped points
+pts1 = np.float32([[0,0], [w-1,0], [0,h-1], [w-1,h-1]])  # corners of original image
+pts2 = np.float32([[50,50], [w+50,30], [30,h+50], [w+30,h+30]])  # warped corners
 
-# === Load object image ===
+# Compute the perspective transform
+M = cv2.getPerspectiveTransform(pts1, pts2)
 
-img = mpimg.imread(r'Einstein.jpg')
-H, W = img.shape[0], img.shape[1]
+# Step 1: Warp corners to find new bounds
+corners = np.array([[0,0], [w,0], [w,h], [0,h]], dtype=np.float32).reshape(-1,1,2)
+warped_corners = cv2.perspectiveTransform(corners, M)
 
-# === Physical coordinates for image ===
+# Step 2: Get new bounding box size
+x_coords = warped_corners[:,0,0]
+y_coords = warped_corners[:,0,1]
+min_x, max_x = np.min(x_coords), np.max(x_coords)
+min_y, max_y = np.min(y_coords), np.max(y_coords)
+new_w = int(np.ceil(max_x - min_x))
+new_h = int(np.ceil(max_y - min_y))
 
-x_phys = np.linspace(-scale, scale, W)
-y_phys = np.linspace(-scale, scale * H / W, H)
+# Step 3: Adjust transformation to translate image back into visible area
+T = np.array([[1, 0, -min_x],
+              [0, 1, -min_y],
+              [0, 0, 1]], dtype=np.float32)
 
-x_grid, y_grid = np.meshgrid(x_phys, y_phys)
+M_adj = T @ M  # Combine the transforms
 
-# === Lens equation ===
+# Warp the image with adjusted matrix and new size
+warped = cv2.warpPerspective(img_rgb, M_adj, (new_w, new_h))
 
-X_new = -f * x_grid / (x_grid - f)
-Y_new = (y_grid * X_new) / x_grid
-
-# === Map back to pixel coordinates ===
-
-X_idx = np.interp(X_new, x_phys, np.arange(W))
-Y_idx = np.interp(Y_new, y_phys, np.arange(H))
-
-X_idx_clipped = np.clip(X_idx, 0, W - 1)
-Y_idx_clipped = np.clip(Y_idx, 0, H - 1)
-
-coords = np.vstack([Y_idx_clipped.ravel(), X_idx_clipped.ravel()])
-
-img_out = np.zeros_like(img)
-for c in range(img.shape[2]):
-    img_out[..., c] = map_coordinates(img[..., c], coords, order=1, mode='reflect').reshape(H, W)
-
-# === Plot ===
-
-fig, ax = plt.subplots(figsize=(8, 6))
-
-# Original image at (x_obj, 0)
-ax.imshow(img, extent=[x_obj - scale, x_obj + scale, -scale, scale], zorder=1)
-ax.text(x_obj, scale + 0.1, r'$(x, y)$', ha='center', fontsize=12)
-
-# Virtual image at X_obj
-X_obj = -f * x_obj / (x_obj - f)
-ax.imshow(img_out, extent=[X_obj - scale, X_obj + scale, -scale, scale], zorder=1)
-ax.text(X_obj, -scale - 0.1, r'$(X, Y)$', ha='center', fontsize=12)
-
-# Lens (ellipse)
-lens = Ellipse((0, 0), width=0.2, height=3.0, edgecolor='blue', facecolor='none', lw=2)
-ax.add_patch(lens)
-
-# Focal points
-ax.plot([f, -f], [0, 0], 'b*', markersize=12)
-
-# Rays
-# 1st ray → straight through center
-ax.plot([x_obj, 0, X_obj], [0, 0, 0], 'r-', lw=1)
-# 2nd ray → through top of object
-ax.plot([x_obj, 0, X_obj], [scale, scale * 0.5, -scale], 'r-', lw=1)
-
-# Labels and grid
-ax.set_xlim(-3, 3)
-ax.set_ylim(-2, 2)
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.grid(True)
-ax.set_title('Image of object in a converging lens')
-
+# Show result
+plt.imshow(warped)
+plt.title("Warped Without Cropping or Black Borders")
+plt.axis('off')
 plt.show()
