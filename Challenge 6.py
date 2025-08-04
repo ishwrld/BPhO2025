@@ -1,69 +1,120 @@
-# import os 
-# import cv2 as cv
-# import numpy as np
-# import matplotlib.pyplot as plt
-
-# f = 0.5
-# import matplotlib.transforms as mtransforms
-
-# fig, ax = plt.subplots()
-
-# img = cv.imread(r'Einstein.jpg')
-
-# height, width = img.shape
-
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
+from matplotlib.patches import Ellipse
 
-# Load image
-img = Image.open("Einstein.jpg").convert("L")  # grayscale
-img_array = np.array(img)
+# Initialising
+OBJECT = cv2.cvtColor(cv2.imread(r"Einstein.jpg"), cv2.COLOR_BGR2RGB)
+H, W = OBJECT.shape[:2]
+# Scale down height and width so image fits in plot
+HEIGHT = H * 0.005 # Scale factor divides by 200
+WIDTH = W * 0.005
 
-height, width = img_array.shape
+F = 1.5 #Focal length
+X_MIN = F / 2 + WIDTH / 2 # Bounds for image
+# NOT DOING X_MIN/Y_MIN/Y_MAX FOR NOW
 
-# Lens parameters
-f = 100  # focal length in pixels
+object_coord = (2 * F, 0) # x,y initial coordinates of image centre
+object_extent = [object_coord[0] - WIDTH / 2,   # left
+                object_coord[0] + WIDTH / 2,    # right
+                object_coord[1] - HEIGHT / 2,   # bottom
+                object_coord[1] + HEIGHT / 2]   # top
+# EXTENT = [left, right, bottom, top]]
+dragging = False
 
-# Object coordinates (x, y)
-y_coords, x_coords = np.indices(img_array.shape)
+fig, ax = plt.subplots()
+ax.set_xlim(-6, 6)
+ax.set_ylim(-6, 6)
+ax.set_aspect('equal')
+ax.set_title("Image of object in a converging lens")
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+ax.grid(True, linestyle='--')
 
-# Mask only where x > f (real image case)
-mask = x_coords > f
-x_obj = x_coords[mask]
-y_obj = y_coords[mask]
+# Lens and focal points
+lens = Ellipse((0, 0), width=0.2, height=2*F, color='blue', fill=False)
+ax.add_patch(lens)
+ax.plot(-F, 0, marker='x', color='blue')
+ax.plot(F, 0, marker='x', color='blue')
 
-# Lens formula: v = (u*f)/(u - f)
-u = x_obj
-v = (u * f) / (u - f)
+object_shown = ax.imshow(OBJECT, extent=object_extent)
 
-# Magnification: M = -v/u
-M = -v / u
+def challenge_5(px,py): 
+    new_x = -px #Flip image horizontally
+    new_y = py    
+    # Ensure maps are float32 for remap()
+    return new_x.astype(np.float32), new_y.astype(np.float32)
 
-# Transformed coordinates
-X_img = v
-Y_img = M * (y_obj - height // 2) + height // 2  # scale vertically around center
 
-# Create empty canvas for image projection
-sim_img = np.zeros_like(img_array)
+def challenge_6(px,py):
+    divisor = np.where(px == F, 1e-6, px - F)  # Avoid division by zero
+    new_x = - F * px / divisor
+    new_y = py * new_x / px
+    return new_x.astype(np.float32), new_y.astype(np.float32)
 
-# Only plot if coordinates are valid
-X_img = X_img.astype(int)
-Y_img = Y_img.astype(int)
+def create_virtual(pobject_extent):
+    global OBJECT, ax
+    left = pobject_extent[0]
+    right = pobject_extent[1]
+    bottom = pobject_extent[2]
+    top = pobject_extent[3]
 
-valid = (X_img >= 0) & (X_img < width) & (Y_img >= 0) & (Y_img < height)
+    x_coords, y_coords = np.meshgrid(np.linspace(left, right, W),
+                                     np.linspace(bottom, top,H))
+    # So each coordinate is a pixel
+    x_real, y_real = challenge_6(x_coords, y_coords)
 
-sim_img[Y_img[valid], X_img[valid]] = img_array[y_obj[valid], x_obj[valid]]
+    virtual_extent =[x_real.min(), x_real.max(), y_real.min(), y_real.max()]
+    virtual_width = virtual_extent[1] - virtual_extent[0]
+    virtual_height = virtual_extent[3] - virtual_extent[2]
+    #print("Width:", virtual_width)
+    #print("Height:", virtual_height)
+    #print(W, H)
+    map_x = (x_real - virtual_extent[0]) * (virtual_width) * (W - 1)
+    map_y = (y_real - virtual_extent[2]) * (virtual_height) * (H - 1)
 
-# Plot original and transformed images
-fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-axes[0].imshow(img_array, cmap='gray')
-axes[0].set_title("Original (Object)")
-axes[1].imshow(sim_img, cmap='gray')
-axes[1].set_title("Transformed (Real Image through Convex Lens)")
+    img = cv2.remap(
+        OBJECT, map_x.astype(np.float32), map_y.astype(np.float32),
+        interpolation=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(255, 0, 0)  # RED in RGB
+        )
+    cv2.imshow("Remapped Image", img)
 
-for ax in axes:
-    ax.axis('off')
+    return ax.imshow(img, extent=virtual_extent)
 
-plt.tight_layout()
+virtual_shown = create_virtual(object_extent)
+
+# Moving image with mouse
+def on_press(event):
+    global dragging
+    if event.inaxes == ax:
+        contains, _ = object_shown.contains(event)
+        if contains:
+            dragging = True
+
+def on_release(event):
+    global dragging
+    dragging = False
+
+def on_motion(event):
+    global dragging, virtual, virtual_shown
+    if dragging and event.inaxes == ax:
+        coord = (event.xdata, event.ydata)
+        if coord[0] > X_MIN:
+            obj_extent = [coord[0] - WIDTH / 2,  # left
+                            coord[0] + WIDTH / 2,   # right
+                            coord[1] - HEIGHT / 2,  # bottom
+                            coord[1] + HEIGHT / 2]  # top
+            object_shown.set_extent(obj_extent)
+            virtual_shown.remove()
+            virtual_shown = create_virtual(obj_extent)
+
+    fig.canvas.draw_idle()
+
+fig.canvas.mpl_connect('button_press_event', on_press)
+fig.canvas.mpl_connect('button_release_event', on_release)
+fig.canvas.mpl_connect('motion_notify_event', on_motion)
+
 plt.show()
+    

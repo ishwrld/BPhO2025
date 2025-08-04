@@ -52,6 +52,7 @@
 #     plt.show()
 
 
+
 # def challenge_5(px,py): 
 #     """
 #     Function to flip the image horizontally for Challenge 5.
@@ -162,7 +163,7 @@ Y_MIN = -f
 Y_MAX = f
 
 # Initialise Variables
-obj_x = f  # Initial object x position
+obj_x = f/2  # Initial object x position
 obj_y = H/2  # Initial object y position
 dragging = False
 
