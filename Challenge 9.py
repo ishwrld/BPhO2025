@@ -5,23 +5,23 @@ from matplotlib.patches import Arc
 # CONSTANTS
 OBJECT = plt.imread("Einstein.jpg")
 HEIGHT, WIDTH = OBJECT.shape[:2]
-SCALE = 1.5 # Scale down image to look better
+SCALE = 0.5 # Scale down image to look better
 SCALE_H = HEIGHT * SCALE
 SCALE_W = WIDTH * SCALE
 R = 600 * SCALE # Radius
-F = R / 2 # Focal point
-X_MIN = SCALE_W / 2
-X_MAX = R - SCALE_W / 2
+X_MIN = R + SCALE_W / 2
+X_MAX = 2 * R - SCALE_W / 2
 COLOURS = OBJECT.reshape(-1, 3).astype(np.float32) / 255.0
 
 # FUNCTIONS
-def challenge_8(px,py):
-    m = np.tan(2 * np.arctan(py / (R ** 2 - px ** 2) ** 0.5))
-    new_x = - (m * (R ** 2 - py ** 2) ** 0.5 - py) / (py/px + m)
-    new_y = new_x * py / px
+def challenge_9(px,py):
+    alpha = 0.5 * np.arctan(py/px)
+    k = px / np.cos(2 * alpha)
+    new_y = k * np.sin(alpha) / (k / R - np.cos(alpha) + px * np.sin(alpha) / py)
+    new_x = px * new_y / py
     return new_x, new_y
 
-print(challenge_8(598,638))
+#print(challenge_9(598,638))
 
 def create_virtual(pobject_extent, scatter_image = None):
     '''Create a virtual image based on the object extent'''
@@ -33,7 +33,7 @@ def create_virtual(pobject_extent, scatter_image = None):
     )
 
     # Map object coordinates to image coordinates
-    image_x, image_y = challenge_8(object_x, object_y)
+    image_x, image_y = challenge_9(object_x, object_y)
     map_x = image_x.ravel() # Flatten into 1D array
     map_y = image_y.ravel() # Flatten into 1D array
     
@@ -55,14 +55,14 @@ def create_virtual(pobject_extent, scatter_image = None):
 
 def draw_rays(x_coord, y_coord, rays = []):
     global R, ax
-    x_img, y_img = challenge_8(x_coord, y_coord) # Image coordinates
+    x_img, y_img = challenge_9(x_coord, y_coord) # Image coordinates
 
     # Clear any old rays
     if rays != []:
         for ray in rays:
             ray.remove()
     
-    c_x = -(R ** 2 - y_coord ** 2) ** 0.5 # X coordinate of point C
+    c_x = -(R ** 2 - y_coord ** 2) ** 0.5 # X coordinate of point on circle
     point_c, = ax.plot(c_x, y_coord)
     main_ray, = ax.plot([x_coord, c_x, x_img, x_coord], [y_coord, y_coord, y_img, y_coord], 
                         linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
@@ -96,34 +96,30 @@ def on_motion(event):
                             coord[1] + SCALE_H / 2]     # top
             object_shown.set_extent(obj_extent)
             virtual_shown = create_virtual(obj_extent, virtual_shown)
-            rays1 = draw_rays(coord[0], obj_extent[3], rays1)
-            rays2 = draw_rays(obj_extent[0], obj_extent[3], rays2)
+            #rays1 = draw_rays(coord[0], obj_extent[3], rays1)
+            #rays2 = draw_rays(obj_extent[0], obj_extent[3], rays2)
 
     fig.canvas.draw_idle()
 
 # Initialising plot
 dragging = False
 fig, ax = plt.subplots()
-ax.set_xlim(-R*1.2, R * 1.6)
+ax.set_xlim(-0.1 * R, R * 2)
 ax.set_ylim(-R * 1.2, R * 1.2)
-# SIZE = 1000
-# ax.set_xlim(-SIZE, SIZE)
-# ax.set_ylim(-SIZE, SIZE)
 ax.set_aspect('equal')
-ax.set_title("Reflection in a concave mirror")
+ax.set_title("Reflection in a convex mirror")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.grid(True, linestyle = '--')
 
 # Mirror and its centre and focal point
 mirror = Arc((0, 0), width = 2 * R, height = 2 * R, angle = 180, 
-             theta1 = -90, theta2 = 90, color = 'blue', zorder = 3)
+             theta1 = 90, theta2 = -90, color = 'blue', zorder = 3)
 ax.add_patch(mirror)
 ax.plot(0, 0, marker = 'x', color = 'blue', zorder = 7)
-ax.plot(-F, 0, marker = 'x', color = 'red', zorder = 7)
 
 # Initial object coordinates and extent
-object_coord = (F, F) # Initial object coordinates
+object_coord = (1.25 * R, SCALE_W) # Initial object coordinates
 object_extent = [object_coord[0] - SCALE_W / 2,    # left
                 object_coord[0] + SCALE_W / 2,     # right
                 object_coord[1] - SCALE_H / 2,     # bottom

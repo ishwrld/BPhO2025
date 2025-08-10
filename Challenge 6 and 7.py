@@ -1,27 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arc
+from matplotlib.patches import Ellipse
 
 # CONSTANTS
 OBJECT = plt.imread("Einstein.jpg")
 HEIGHT, WIDTH = OBJECT.shape[:2]
-SCALE = 1.5 # Scale down image to look better
+SCALE = 0.4 # Scale down image to look better
 SCALE_H = HEIGHT * SCALE
 SCALE_W = WIDTH * SCALE
-R = 600 * SCALE # Radius
-F = R / 2 # Focal point
-X_MIN = SCALE_W / 2
-X_MAX = R - SCALE_W / 2
+F = 250 # Focal length
+X_MIN = F / 2 + SCALE_W / 2 # Stop image getting too close to lens
 COLOURS = OBJECT.reshape(-1, 3).astype(np.float32) / 255.0
+SIZE = 1000 # Limits of axis go from -SIZE to SIZE
 
 # FUNCTIONS
-def challenge_8(px,py):
-    m = np.tan(2 * np.arctan(py / (R ** 2 - px ** 2) ** 0.5))
-    new_x = - (m * (R ** 2 - py ** 2) ** 0.5 - py) / (py/px + m)
-    new_y = new_x * py / px
+def challenge_6(px,py):
+    divisor = np.where(px == F, 1e-6, px - F)  # Avoid division by zero
+    new_x = - F * px / divisor
+    new_y = (py * new_x) / px
     return new_x, new_y
-
-print(challenge_8(598,638))
 
 def create_virtual(pobject_extent, scatter_image = None):
     '''Create a virtual image based on the object extent'''
@@ -33,7 +30,7 @@ def create_virtual(pobject_extent, scatter_image = None):
     )
 
     # Map object coordinates to image coordinates
-    image_x, image_y = challenge_8(object_x, object_y)
+    image_x, image_y = challenge_6(object_x, object_y)
     map_x = image_x.ravel() # Flatten into 1D array
     map_y = image_y.ravel() # Flatten into 1D array
     
@@ -41,12 +38,16 @@ def create_virtual(pobject_extent, scatter_image = None):
     if scatter_image != None:
         scatter_image.remove()
     
+    marker_size = 1
+    if pobject_extent[0] < F:
+        marker_size = 6
+
     # Create scatter plot for virtual image
     scatter_image = ax.scatter(
         map_x, map_y,
         c = COLOURS,
         marker = ',', 
-        s = 1,  # Size of each point
+        s = marker_size,  # Size of each point
         edgecolors = "none",
         zorder = 1
     )
@@ -54,22 +55,31 @@ def create_virtual(pobject_extent, scatter_image = None):
     return scatter_image
 
 def draw_rays(x_coord, y_coord, rays = []):
-    global R, ax
-    x_img, y_img = challenge_8(x_coord, y_coord) # Image coordinates
+    global F, SIZE
+    x_img, y_img = challenge_6(x_coord, y_coord) # Image coordinates
 
     # Clear any old rays
     if rays != []:
         for ray in rays:
             ray.remove()
-    
-    c_x = -(R ** 2 - y_coord ** 2) ** 0.5 # X coordinate of point C
-    point_c, = ax.plot(c_x, y_coord)
-    main_ray, = ax.plot([x_coord, c_x, x_img, x_coord], [y_coord, y_coord, y_img, y_coord], 
-                        linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
-    second_ray, = ax.plot([c_x, 0], [y_coord, 0], 
-                        linestyle = '--', linewidth = 0.5, color = 'blue', zorder = 5)
 
-    rays = [point_c, main_ray, second_ray]
+    # 2 lines if real / 4 lines if virtual
+    if x_coord < F: # Virtual image
+        top_real, = ax.plot([x_coord, 0, -SIZE], [y_coord, y_coord, -SIZE * y_coord / F + y_coord], 
+                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
+        middle_real, = ax.plot([x_coord, -SIZE], [y_coord, -SIZE * y_coord / x_coord], 
+                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
+        top_virtual, = ax.plot([0, x_img], [y_coord, y_img], 
+                            linestyle = '--', linewidth = 0.5, color = 'red', zorder = 5)
+        middle_virtual, = ax.plot([x_coord, x_img], [y_coord, y_img], 
+                            linestyle = '--', linewidth = 0.5, color = 'red', zorder = 5)
+        rays = [top_real, top_virtual, middle_real, middle_virtual]
+    else:
+        top_real, = ax.plot([x_coord, 0, x_img], [y_coord, y_coord, y_img], 
+                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
+        middle_real, = ax.plot([x_coord, x_img], [y_coord, y_img], 
+                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
+        rays = [top_real, middle_real]
         
     return rays
 
@@ -86,44 +96,39 @@ def on_release(event):
     dragging = False
 
 def on_motion(event):
-    global dragging, virtual_shown, object_shown, rays1, rays2
+    global dragging, virtual_shown, object_shown, rays
     if dragging and event.inaxes == ax:
         coord = (event.xdata, event.ydata) # Mouse coordinates taken as centre of image
-        if X_MIN < coord[0] < X_MAX:    # To reduce lag when virtual gets too big
+        if coord[0] > X_MIN:    # To reduce lag when virtual gets too big
             obj_extent = [coord[0] - SCALE_W / 2,       # left
                             coord[0] + SCALE_W / 2,     # right
                             coord[1] - SCALE_H / 2,     # bottom
                             coord[1] + SCALE_H / 2]     # top
             object_shown.set_extent(obj_extent)
             virtual_shown = create_virtual(obj_extent, virtual_shown)
-            rays1 = draw_rays(coord[0], obj_extent[3], rays1)
-            rays2 = draw_rays(obj_extent[0], obj_extent[3], rays2)
+            rays = draw_rays(coord[0], obj_extent[3], rays)
 
     fig.canvas.draw_idle()
 
 # Initialising plot
 dragging = False
 fig, ax = plt.subplots()
-ax.set_xlim(-R*1.2, R * 1.6)
-ax.set_ylim(-R * 1.2, R * 1.2)
-# SIZE = 1000
-# ax.set_xlim(-SIZE, SIZE)
-# ax.set_ylim(-SIZE, SIZE)
+ax.set_xlim(-SIZE, SIZE)
+ax.set_ylim(-SIZE, SIZE)
 ax.set_aspect('equal')
-ax.set_title("Reflection in a concave mirror")
+ax.set_title("Image of object in a converging lens")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.grid(True, linestyle = '--')
 
-# Mirror and its centre and focal point
-mirror = Arc((0, 0), width = 2 * R, height = 2 * R, angle = 180, 
-             theta1 = -90, theta2 = 90, color = 'blue', zorder = 3)
-ax.add_patch(mirror)
-ax.plot(0, 0, marker = 'x', color = 'blue', zorder = 7)
-ax.plot(-F, 0, marker = 'x', color = 'red', zorder = 7)
+# Lens and focal points
+lens = Ellipse((0, 0), width = 0.2 * F, height = 2 * F, color = 'blue', fill = False, zorder = 3)
+ax.add_patch(lens)
+ax.plot(-F, 0, marker = 'x', color = 'blue')
+ax.plot(F, 0, marker = 'x', color = 'blue')
 
 # Initial object coordinates and extent
-object_coord = (F, F) # Initial object coordinates
+object_coord = (2 * F, F) # Initial object coordinates
 object_extent = [object_coord[0] - SCALE_W / 2,    # left
                 object_coord[0] + SCALE_W / 2,     # right
                 object_coord[1] - SCALE_H / 2,     # bottom
@@ -132,8 +137,7 @@ object_extent = [object_coord[0] - SCALE_W / 2,    # left
 # Show object and virtual images and rays
 object_shown = ax.imshow(OBJECT, extent = object_extent, zorder = 2)
 virtual_shown = create_virtual(object_extent)
-rays1 = draw_rays(object_coord[0], object_extent[3])
-rays2 = draw_rays(object_extent[0], object_extent[3])
+rays = draw_rays(object_coord[0], object_extent[3])
 
 fig.canvas.mpl_connect('button_press_event', on_press)
 fig.canvas.mpl_connect('button_release_event', on_release)
