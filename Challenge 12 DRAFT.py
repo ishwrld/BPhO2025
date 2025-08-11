@@ -42,13 +42,21 @@ def draw_triangle(alpha, theta_i):
     normal_vec = np.array([side_vec[1], -side_vec[0]])
     normal_vec = normal_vec / np.linalg.norm(normal_vec)
 
+    # Draw short dotted normal at midpoint
+    normal_length = 0.4
+    p_normal_start = midpoint - normal_vec * normal_length / 2
+    p_normal_end = midpoint + normal_vec * normal_length / 2
+    ax.plot([p_normal_start[0], p_normal_end[0]],
+            [p_normal_start[1], p_normal_end[1]],
+            linestyle=':', color='white')
+
     theta_rad = np.deg2rad(theta_i)
     incident_vec = (
         np.cos(theta_rad) * normal_vec
         + np.sin(theta_rad) * np.array([-normal_vec[1], normal_vec[0]])
     )
 
-    length = 0.8
+    length = 0.5
     p1 = midpoint + incident_vec * length
     p2 = midpoint
     ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color="cyan")
@@ -73,7 +81,7 @@ slider_alpha = Slider(ax_slider_alpha, 'Alpha', 60, 150, valinit=alpha_init, val
 slider_alpha.label.set_color('white')
 
 ax_slider_theta = plt.axes([0.2, 0.1, 0.6, 0.03], facecolor="gray")
-slider_theta = Slider(ax_slider_theta, 'Theta', 0, 90, valinit=theta_init, valstep=1)
+slider_theta = Slider(ax_slider_theta, 'Theta', 10, 80, valinit=theta_init, valstep=5)
 slider_theta.label.set_color('white')
 
 def update(val):
@@ -86,4 +94,3 @@ slider_alpha.on_changed(update)
 slider_theta.on_changed(update)
 
 plt.show()
-
