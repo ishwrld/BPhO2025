@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 X_LIMIT = 500
-Y_LIMIT = 500
+Y_LIMIT = 100
 R = 200
 
 # Find n for given frequency
@@ -23,7 +23,7 @@ def secondaryMinimum(n):
 
 # Y coordinate for any given x coordinate with epsilon and alpha
 def calcY(px, eps, alpha):
-    return (eps ** 2 + px ** 2) ** 0.5 - alpha
+    return (eps ** 2 - px ** 2) ** 0.5 - alpha
 
 def chooseColour(freq):
     if freq < 405:  # Lower than red
@@ -45,34 +45,60 @@ def chooseColour(freq):
     else:
         return [np.nan, np.nan, np.nan]
 
-def plotSingleLine(freq, n, eps, alp, col):
-    radius = R * np.sin(eps) * np.cos(alp)
-    minY = radius - R * np.sin(eps - alp) - 
+def plotCurve(freq, alpha):
+    # x ** 2 + (y + alp) ** 2 = eps ** 2
+    # radius = R * np.sin(eps) * np.cos(alp)
+    # minY = radius - R * np.sin(eps - alp) - 4
+    colour = chooseColour(freq)
+    n = formula(freq)
+    eps1 = primaryMinimum(n)
+    eps2 = secondaryMinimum(n)
+    x_coords = np.linspace(-X_LIMIT,X_LIMIT, 1000)
+    y_coords1 = calcY(x_coords, eps1, alpha)
+    y_coords2 = calcY(x_coords, eps2, alpha)
+    ax.plot(x_coords, y_coords1, color = colour, linewidth = 1, label = "Primary")
+    ax.plot(x_coords, y_coords2, color = colour, linewidth = 1, label = "Secondary")
 
 
 def update(val):
-    solar_angle = solar_slider.val
+    solar_angle = np.deg2rad(solar_slider.val)
+    ax.clear()
+    ax.set_title("Primary and Secondary Rainbows")
+    ax.set_ylim(0, Y_LIMIT)
+    ax.set_aspect('equal')
+    #ax.set_xticks([])
+    #ax.set_yticks([])
+    for freq in frequencies:
+        plotCurve(freq, solar_angle)
 
 
 # Initialise plot
 fig, ax = plt.subplots()
+plt.subplots_adjust(bottom=0.25)
 ax.set_title("Primary and Secondary Rainbows")
-ax.set_xlim(-X_LIMIT, X_LIMIT)
+#ax.set_xlim(-X_LIMIT, X_LIMIT)
 ax.set_ylim(0, Y_LIMIT)
-ax.set_xticks([])
-ax.set_yticks([])
+ax.set_aspect('equal')
+#ax.set_xticks([])
+#ax.set_yticks([])
 ax.spines[['top', 'right', 'left', 'bottom']].set_visible(False)
 
 # Slider
+solar_angle = 5
 solar_ax = plt.axes([0.25, 0.1, 0.65, 0.03])
-solar_slider = Slider(solar_ax, 'Length L', 0, 180, valinit=5, valstep=1)
+solar_slider = Slider(solar_ax, 'Solar Angle', 0, 180, valinit=solar_angle, valstep=1)
 
 frequencies = np.linspace(400, 750, 7)
-indexes = formula(frequencies)
-primaryElevation = primaryMinimum(indexes)
-secondaryElevation = secondaryMinimum(indexes)
-colour = np.array([chooseColour(f) for f in frequencies])
+print(frequencies)
+for freq in frequencies:
+    plotCurve(freq, np.deg2rad(solar_angle))
 
 
 
+
+# indexes = formula(frequencies)
+# primaryElevation = primaryMinimum(indexes)
+# secondaryElevation = secondaryMinimum(indexes)
+# colour = np.array([chooseColour(f) for f in frequencies])
+solar_slider.on_changed(update)
 plt.show()
