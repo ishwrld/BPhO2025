@@ -80,6 +80,13 @@ def draw_rays(x_coord, y_coord, rays = []):
         middle_real, = ax.plot([x_coord, x_img], [y_coord, y_img], 
                             linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
         rays = [top_real, middle_real]
+
+    img_coord, = ax.plot(x_img, y_img, marker = 'x', color = 'red')
+    obj_coord, = ax.plot(x_coord, y_coord, marker = 'x', color = 'red')
+    obj_text = ax.annotate(f"({x_coord:.0f}, {y_coord:.0f})", (x_coord, y_coord), (x_coord, y_coord+0.1* SIZE))
+    img_text = ax.annotate(f"({x_img:.0f}, {y_img:.0f})", (x_img, y_img), (x_img-0.3 * SIZE, y_img-0.1*SIZE))
+
+    rays.extend([img_coord, obj_coord, obj_text, img_text])
         
     return rays
 

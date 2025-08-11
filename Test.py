@@ -38,149 +38,219 @@ def challenge_6():
     plt.axis("off")
     plt.show()
 
+# Import Libraries ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
+import customtkinter as ctk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as ctkplt
 
-# CONSTANTS
-OBJECT = plt.imread("Einstein.jpg")
-HEIGHT, WIDTH = OBJECT.shape[:2]
-SCALE = 0.4 # Scale down image to look better
-SCALE_H = HEIGHT * SCALE
-SCALE_W = WIDTH * SCALE
-F = 250 # Focal length
-X_MIN = F / 2 + SCALE_W / 2 # Stop image getting too close to lens
-COLOURS = OBJECT.reshape(-1, 3).astype(np.float32) / 255.0
-SIZE = 1000 # Limits of axis go from -SIZE to SIZE
 
-# FUNCTIONS
-def challenge_6(px,py):
-    divisor = np.where(px == F, 1e-6, px - F)  # Avoid division by zero
-    new_x = - F * px / divisor
-    new_y = (py * new_x) / px
-    return new_x, new_y
+# Adding to User Interface --------------------------------------------------------------------------------------------------------------------------------------------------------
+def create_task8_page(root):
 
-def create_virtual(pobject_extent, scatter_image = None):
-    '''Create a virtual image based on the object extent'''
-    global OBJECT, WIDTH, HEIGHT, COLOURS, ax
-    # Create meshgrid for object coordinates
-    object_x, object_y = np.meshgrid(
-        np.linspace(pobject_extent[0], pobject_extent[1], WIDTH),
-        np.linspace(pobject_extent[3], pobject_extent[2], HEIGHT)
-    )
+    # Create Fonts
+    TITLE_FONT    = ctk.CTkFont(family = 'Helvetica Nue', size = 72, weight = 'bold')
+    SUBTITLE_FONT = ctk.CTkFont(family = 'Helvetica Nue', size = 32, weight = 'bold')
+    TEXT_FONT     = ctk.CTkFont(family = 'Helvetica Nue', size = 24)
+    TEXT_COLOUR   = '#ffffff'
 
-    # Map object coordinates to image coordinates
-    image_x, image_y = challenge_6(object_x, object_y)
-    map_x = image_x.ravel() # Flatten into 1D array
-    map_y = image_y.ravel() # Flatten into 1D array
-    
-    # Remove old image
-    if scatter_image != None:
-        scatter_image.remove()
-    
-    marker_size = 1
-    if pobject_extent[0] < F:
-        marker_size = 6
+    # Load Image
+    obj = plt.imread("Einstein.jpg") # Put object into numpy array
+    H,W = obj.shape[:2] # Get height and width (in pixels) of object image
 
-    # Create scatter plot for virtual image
-    scatter_image = ax.scatter(
-        map_x, map_y,
-        c = COLOURS,
-        marker = ',', 
-        s = marker_size,  # Size of each point
-        edgecolors = "none",
-        zorder = 1
-    )
+    # Consants
+    R = 500 # Radius of spherical mirror
+    F = R/2
 
-    return scatter_image
+    # Bounds for the object
+    X_MIN     = F
+    X_MAX     = 1000
+    Y_MIN     = - (R - H/2)
+    Y_MAX     =   (R - H/2)
 
-def draw_rays(x_coord, y_coord, rays = []):
-    global F, SIZE
-    x_img, y_img = challenge_6(x_coord, y_coord) # Image coordinates
-
-    # Clear any old rays
-    if rays != []:
-        for ray in rays:
-            ray.remove()
-
-    # 2 lines if real / 4 lines if virtual
-    if x_coord < F: # Virtual image
-        top_real, = ax.plot([x_coord, 0, -SIZE], [y_coord, y_coord, -SIZE * y_coord / F + y_coord], 
-                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
-        middle_real, = ax.plot([x_coord, -SIZE], [y_coord, -SIZE * y_coord / x_coord], 
-                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
-        top_virtual, = ax.plot([0, x_img], [y_coord, y_img], 
-                            linestyle = '--', linewidth = 0.5, color = 'red', zorder = 5)
-        middle_virtual, = ax.plot([x_coord, x_img], [y_coord, y_img], 
-                            linestyle = '--', linewidth = 0.5, color = 'red', zorder = 5)
-        rays = [top_real, top_virtual, middle_real, middle_virtual]
-    else:
-        top_real, = ax.plot([x_coord, 0, x_img], [y_coord, y_coord, y_img], 
-                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
-        middle_real, = ax.plot([x_coord, x_img], [y_coord, y_img], 
-                            linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
-        rays = [top_real, middle_real]
-        
-    return rays
-
-# Moving image with mouse
-def on_press(event):
-    global dragging
-    if event.inaxes == ax:
-        contains, _ = object_shown.contains(event)
-        if contains:
-            dragging = True
-
-def on_release(event):
-    global dragging
+    # Initialise Variables
+    obj_x = 2*F
+    obj_y = 0.25 * R
     dragging = False
 
-def on_motion(event):
-    global dragging, virtual_shown, object_shown, rays
-    if dragging and event.inaxes == ax:
-        coord = (event.xdata, event.ydata) # Mouse coordinates taken as centre of image
-        if coord[0] > X_MIN:    # To reduce lag when virtual gets too big
-            obj_extent = [coord[0] - SCALE_W / 2,       # left
-                            coord[0] + SCALE_W / 2,     # right
-                            coord[1] - SCALE_H / 2,     # bottom
-                            coord[1] + SCALE_H / 2]     # top
-            object_shown.set_extent(obj_extent)
-            virtual_shown = create_virtual(obj_extent, virtual_shown)
-            rays = draw_rays(coord[0], obj_extent[3], rays)
+    # Subprograms
+    def map_pixel(x_obj,y_obj):
+        """
+        Map an input pixel at (x_obj, y_obj) through a concave mirror of radius R,
+        returning (x_img, y_img).
+        """
 
-    fig.canvas.draw_idle()
+        # Compute the square root term sqrt(R^2 - y_obj^2)
+        sqrt_term = np.sqrt(R**2 - y_obj**2)
+       
+        # Compute theta
+        theta = np.arctan2(y_obj, sqrt_term)
 
-# Initialising plot
-dragging = False
-fig, ax = plt.subplots()
-ax.set_xlim(-SIZE, SIZE)
-ax.set_ylim(-SIZE, SIZE)
-ax.set_aspect('equal')
-ax.set_title("Image of object in a converging lens")
-ax.set_xlabel("x")
-ax.set_ylabel("y")
-ax.grid(True, linestyle = '--')
+        # Compute m (reflected ray slope)
+        m = np.tan(2 * theta)
 
-# Lens and focal points
-lens = Ellipse((0, 0), width = 0.2 * F, height = 2 * F, color = 'blue', fill = False, zorder = 3)
-ax.add_patch(lens)
-ax.plot(-F, 0, marker = 'x', color = 'blue')
-ax.plot(F, 0, marker = 'x', color = 'blue')
+        # Compute x_img
+        x_img = -(m * sqrt_term - y_obj)/(y_obj/x_obj + m)
 
-# Initial object coordinates and extent
-object_coord = (2 * F, F) # Initial object coordinates
-object_extent = [object_coord[0] - SCALE_W / 2,    # left
-                object_coord[0] + SCALE_W / 2,     # right
-                object_coord[1] - SCALE_H / 2,     # bottom
-                object_coord[1] + SCALE_H / 2]     # top
+        # Compute y_img
+        y_img = -(y_obj/x_obj) * x_img
 
-# Show object and virtual images and rays
-object_shown = ax.imshow(OBJECT, extent = object_extent, zorder = 2)
-virtual_shown = create_virtual(object_extent)
-rays = draw_rays(object_coord[0], object_extent[3])
+        return x_img, y_img
 
-fig.canvas.mpl_connect('button_press_event', on_press)
-fig.canvas.mpl_connect('button_release_event', on_release)
-fig.canvas.mpl_connect('motion_notify_event', on_motion)
+    def redraw():
+        """
+        Clear and re‑draw the object, its warped image, and the mirror.
+        """
+        ax_8.clear()
+        ax_8.set_xlim(-R-100, 2*R)
+        ax_8.set_ylim(-1.2*R, 1.2*R)
+        ax_8.set_aspect('equal')
 
-plt.show()
+        ax_8.set_title("Reflection in a concave mirror", color=TEXT_COLOUR)
+        ax_8.set_xlabel("x", color=TEXT_COLOUR)
+        ax_8.set_ylabel("y", color=TEXT_COLOUR)
+        ax_8.set_facecolor('#000000')
+        fig_8.patch.set_facecolor('#000000')
+        ax_8.tick_params(colors=TEXT_COLOUR)
+        for spine in ax_8.spines.values():
+            spine.set_color(TEXT_COLOUR)
+        # Draw principal axis
+        ax_8.axvline(0, linestyle='--', color='gray')
+        ax_8.axhline(0, linestyle='--', color='gray')
+
+
+        ax_8.grid(True,        # turn the grid on
+            which='both',# draw both major and minor grids
+            linestyle='--',
+            linewidth=0.5,
+            color='gray',
+            alpha=0.7)
+
+        # Draw the concave mirror
+        theta = np.linspace(np.pi/2, -np.pi/2, 200)
+        x_m = (-R * np.cos(theta))
+        y_m = (R * np.sin(theta))
+        ax_8.plot(x_m, y_m, linewidth=2)
+
+        # Plot mirror centre
+        ax_8.plot(0, 0,
+            marker='x',
+            color='red',
+            markersize=8,
+            label='Centre of curvature')  
+       
+        # Plot focal point
+        ax_8.plot(F, 0,
+            marker='x',
+            color='blue',
+            markersize=8,
+            label='Focal point')
+           
+       
+        # Establish initial coordinate boundaries for object
+        obj_extent = [(obj_x - W / 2), # x min
+                    (obj_x + W / 2), # x max
+                    (obj_y - H / 2), # y min
+                    (obj_y + H / 2)] # y max
+
+        # Display Object on graph
+        ax_8.imshow(obj,
+                    extent = obj_extent,
+                    origin = 'upper'
+                    )
+       
+        # Compute Warped Image Coordinates
+        x_vals = np.linspace(obj_extent[0], obj_extent[1], W)
+        y_vals = np.linspace(obj_extent[2], obj_extent[3], H)
+
+        x_obj, y_obj = np.meshgrid(x_vals, y_vals)
+
+        x_img,y_img = map_pixel(x_obj,y_obj) # Map every pixel's coordinates in object into image coordinates
+
+        # Convert 2D Grid to 1D list (for scatter)
+        x_flat = x_img.ravel()
+        y_flat = y_img.ravel()
+
+        # Remap colour of each pixel
+        colours = obj.reshape(-1, 3).astype(np.float32) / 255.0
+
+        s = (2)**2 # Size of Marker
+
+        # Plot Image
+        ax_8.scatter(
+            x_flat, y_flat,
+            c=colours,
+            marker='s',
+            s=s,
+            edgecolors='none'
+        )
+
+        fig_8.canvas.draw_idle()
+
+    def on_press(event):
+        '''
+        Check if left click drag is occuring on the matplotlib graph AND in the image
+        '''
+        nonlocal dragging
+
+        # Check if left-click in graph
+        if event.inaxes != ax_8:
+            return
+       
+        # Check if left-click in the object
+        if (obj_x - W/2 <= event.xdata <= obj_x + W/2 and obj_y - H/2 <= event.ydata <= obj_y + H/2) :
+            dragging = True
+
+    def on_motion(event):
+        nonlocal obj_x, obj_y, dragging
+
+        # Check if dragging and still in graph
+        if not dragging or event.inaxes != ax_8:
+            return
+       
+        obj_x = np.clip(event.xdata, X_MIN, X_MAX)
+        obj_y = np.clip(event.ydata, Y_MIN, Y_MAX)
+       
+        redraw()
+
+    def on_release(event):
+        nonlocal dragging
+        if not dragging:
+            return
+       
+        dragging = False
+
+        redraw()
+
+    '''User Interface'''
+    master = ctk.CTkFrame(root, fg_color='#000000')
+    title_8 = ctk.CTkLabel(master, text = "Task 8", font = TITLE_FONT, text_color = TEXT_COLOUR)
+    title_8.pack(pady = 30)
+
+    task_8 = ctk.CTkLabel(
+        master,
+        text = ("Create an interactive model of the real image of an object in a concave spherical mirror"),        font = TEXT_FONT,
+        text_color = TEXT_COLOUR
+    )
+    task_8.pack(pady = 30)
+
+    # Run simulation
+    fig_8, ax_8 = plt.subplots()
+    redraw()
+
+    graph_8 = ctkplt(fig_8, master)
+    graph_8.mpl_connect('button_press_event',   on_press)
+    graph_8.mpl_connect('motion_notify_event',  on_motion)
+    graph_8.mpl_connect('button_release_event', on_release)
+    graph_8.draw()
+    graph_8.get_tk_widget().pack(expand=True, fill='both')
+
+    return master
+
+if __name__ == "__main__":
+    ctk.set_appearance_mode('dark')
+    root = ctk.CTk()
+    root.geometry("1000x600")
+    page = create_task8_page(root)
+    page.pack(expand = True, fill = 'both')
+    root.mainloop()

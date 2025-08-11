@@ -10,13 +10,15 @@ SCALE_H = HEIGHT * SCALE
 SCALE_W = WIDTH * SCALE
 R = 600 * SCALE # Radius
 F = R / 2 # Focal point
-X_MIN = SCALE_W / 2
-X_MAX = R - SCALE_W / 2
+X_MIN = F / 4 + SCALE_W / 2
+X_MAX = 3 * R # Can go as far as edge of axis
+Y_MIN = - R / 2 + SCALE_W / 2
+Y_MAX = R / 2 - SCALE_W / 2
 COLOURS = OBJECT.reshape(-1, 3).astype(np.float32) / 255.0
 
 # FUNCTIONS
 def challenge_8(px,py):
-    m = np.tan(2 * np.arctan(py / (R ** 2 - px ** 2) ** 0.5))
+    m = np.tan(2 * np.arctan(py / (R ** 2 - py ** 2) ** 0.5))
     new_x = - (m * (R ** 2 - py ** 2) ** 0.5 - py) / (py/px + m)
     new_y = new_x * py / px
     return new_x, new_y
@@ -45,7 +47,7 @@ def create_virtual(pobject_extent, scatter_image = None):
     scatter_image = ax.scatter(
         map_x, map_y,
         c = COLOURS,
-        marker = ',', 
+        marker = '.', 
         s = 1,  # Size of each point
         edgecolors = "none",
         zorder = 1
@@ -68,8 +70,13 @@ def draw_rays(x_coord, y_coord, rays = []):
                         linestyle = '-', linewidth = 0.5, color = 'red', zorder = 5)
     second_ray, = ax.plot([c_x, 0], [y_coord, 0], 
                         linestyle = '--', linewidth = 0.5, color = 'blue', zorder = 5)
+    img_coord, = ax.plot(x_img, y_img, marker = 'x', color = 'red')
+    obj_coord, = ax.plot(x_coord, y_coord, marker = 'x', color = 'red')
+    obj_text = ax.annotate(f"({x_coord:.0f}, {y_coord:.0f})", (x_coord, y_coord), (x_coord, y_coord))
+    img_text = ax.annotate(f"({x_img:.0f}, {y_img:.0f})", (x_img, y_img), (x_img- R * 0.4, y_img))
 
-    rays = [point_c, main_ray, second_ray]
+    rays = [point_c, main_ray, second_ray, 
+            img_coord, obj_coord, obj_text, img_text]
         
     return rays
 
@@ -89,7 +96,7 @@ def on_motion(event):
     global dragging, virtual_shown, object_shown, rays1, rays2
     if dragging and event.inaxes == ax:
         coord = (event.xdata, event.ydata) # Mouse coordinates taken as centre of image
-        if X_MIN < coord[0] < X_MAX:    # To reduce lag when virtual gets too big
+        if X_MIN < coord[0] < X_MAX and Y_MIN < coord[1] < Y_MAX:    
             obj_extent = [coord[0] - SCALE_W / 2,       # left
                             coord[0] + SCALE_W / 2,     # right
                             coord[1] - SCALE_H / 2,     # bottom
@@ -97,7 +104,7 @@ def on_motion(event):
             object_shown.set_extent(obj_extent)
             virtual_shown = create_virtual(obj_extent, virtual_shown)
             rays1 = draw_rays(coord[0], obj_extent[3], rays1)
-            rays2 = draw_rays(obj_extent[0], obj_extent[3], rays2)
+            #rays2 = draw_rays(obj_extent[0], obj_extent[3], rays2)
 
     fig.canvas.draw_idle()
 
@@ -123,7 +130,7 @@ ax.plot(0, 0, marker = 'x', color = 'blue', zorder = 7)
 ax.plot(-F, 0, marker = 'x', color = 'red', zorder = 7)
 
 # Initial object coordinates and extent
-object_coord = (F, F) # Initial object coordinates
+object_coord = (F/2, F/2) # Initial object coordinates
 object_extent = [object_coord[0] - SCALE_W / 2,    # left
                 object_coord[0] + SCALE_W / 2,     # right
                 object_coord[1] - SCALE_H / 2,     # bottom
@@ -133,7 +140,7 @@ object_extent = [object_coord[0] - SCALE_W / 2,    # left
 object_shown = ax.imshow(OBJECT, extent = object_extent, zorder = 2)
 virtual_shown = create_virtual(object_extent)
 rays1 = draw_rays(object_coord[0], object_extent[3])
-rays2 = draw_rays(object_extent[0], object_extent[3])
+#rays2 = draw_rays(object_extent[0], object_extent[3])
 
 fig.canvas.mpl_connect('button_press_event', on_press)
 fig.canvas.mpl_connect('button_release_event', on_release)
