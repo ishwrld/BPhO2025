@@ -4,22 +4,24 @@ import numpy as np
 def formula(frequency):
     return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
 
-def primaryReflectance(angle, n):
-    return 180 - 6 * np.rad2deg(np.arcsin(np.sin(np.deg2rad(angle)) / n)) + 2 * angle
+def getPhi(angle, n):
+    return np.rad2deg(np.arcsin(np.sin(angle)/n))
 
-def secondaryReflectance(angle, n):
-    return 4 * np.rad2deg(np.arcsin(np.sin(np.deg2rad(angle)) / n)) - 2 * angle
+def critAngle(n):
+    return np.rad2deg(np.arcsin(1/n))
 
 def primaryMinimum(n):
-    return primaryReflectance(np.rad2deg(np.arcsin(((9 - n ** 2) / 8) ** 0.5)),n)
+    return np.rad2deg(np.arcsin(((9 - n ** 2) / 8) ** 0.5 / n))
+    #return getPhi((np.arcsin(((9 - n ** 2) / 8) ** 0.5)),n)
 
 def secondaryMinimum(n):
-    return secondaryReflectance(np.rad2deg(np.arcsin(((4 - n ** 2) / 3) ** 0.5)), n)
+    return np.rad2deg(np.arcsin(((4 - n ** 2) / 3) ** 0.5/n))
+    #return getPhi((np.arcsin(((4 - n ** 2) / 3) ** 0.5)), n)
 
 def chooseColour(freq):
     if freq < 405:  # Lower than red
         return [np.nan, np.nan, np.nan]
-    if freq < 480:
+    elif freq < 480:
         return [(freq-405)/75,0,0]  # Red
     elif freq < 510:
         return [1, ((freq-480)/30)*127/255, 0]  # Orange
@@ -38,6 +40,7 @@ def chooseColour(freq):
 
 frequencies = np.linspace(400, 750, 350)
 indexes = formula(frequencies)
+critical = critAngle(indexes)
 primary = primaryMinimum(indexes)
 secondary = secondaryMinimum(indexes)
 colour = np.array([chooseColour(f) for f in frequencies])
@@ -45,17 +48,17 @@ colour = np.array([chooseColour(f) for f in frequencies])
 fig, ax = plt.subplots()
 for i in range(len(frequencies) - 1):
     if not np.isnan(colour[i]).any():
-        ax.plot(frequencies[i:i+2], primary[i:i+2], color=colour[i], linewidth=2, label='Primary' if i == 0 else "")
-        ax.plot(frequencies[i:i+2], secondary[i:i+2], color=colour[i], linestyle='--', linewidth=2, label='Secondary' if i == 0 else "")
+        ax.plot(frequencies[i:i+2], critical[i:i+2], color=[0,0,0], linewidth=1.5, label='Critical' if i == 0 else "")
+        ax.plot(frequencies[i:i+2], primary[i:i+2], color=colour[i], linewidth=1.5, label='Primary' if i == 0 else "")
+        ax.plot(frequencies[i:i+2], secondary[i:i+2], color=colour[i], linewidth=1.5, label='Secondary' if i == 0 else "")
 
 ax.set_xlim(frequencies.min(), frequencies.max())
-ax.set_ylim(min(primary.min(), secondary.min())-0.5, max(primary.max(), secondary.max())+0.5)
-ax.set_title("Elevation of single and double rainbows")
+ax.set_ylim(secondary.min()-0.05, critical.max()+0.05)
+ax.set_title("Refraction angle of single and double rainbows")
 ax.set_xlabel("Frequency (THz)")
-ax.set_ylabel("ε (degrees)")
-ax.annotate("Primary Rainbow", (415,42.35))
-ax.annotate("Secondary Rainbow", (600, 50.15))
-
+ax.set_ylabel("ϕ (degrees)")
+ax.annotate("Critical angle", (415,48.5))
+ax.annotate("Primary", (415,45.4))
+ax.annotate("Secondary", (415, 40.7))
 ax.grid(True, dashes = [1,1], alpha = 0.25)
-
 plt.show()
