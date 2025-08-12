@@ -16,12 +16,12 @@ def findIndexWater(frequency):
 # def secondaryMinimum(n):
 #     return secondaryReflectance(np.rad2deg(np.arcsin(((4 - n ** 2) / 3) ** 0.5)), n)
 
-def primaryMinimum(n):
+def secondaryMinimum(n):
     angle = np.arcsin(((9 - n ** 2) / 8) ** 0.5)
     rad = np.pi - 6 * np.arcsin(np.sin(angle) / n) + 2 * angle
     return np.rad2deg(rad)
 
-def secondaryMinimum(n):
+def primaryMinimum(n):
     angle = np.arcsin(((4 - n ** 2) / 3) ** 0.5)
     rad = 4 * np.arcsin(np.sin(angle) / n) - 2 * angle
     return np.rad2deg(rad)

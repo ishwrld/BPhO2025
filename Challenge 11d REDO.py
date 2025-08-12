@@ -4,16 +4,17 @@ from matplotlib.widgets import Slider
 
 R = 3500
 H = 5
-FREQUENCIES = np.linspace(400, 750, 8)
+LW = 0.5
+FREQUENCIES = np.linspace(410, 750, 8)
 
 def findIndexWater(frequency):
     return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
 
-def primaryElevation(n):
+def secondaryElevation(n):
     angle = np.arcsin(((9 - n ** 2) / 8) ** 0.5)
     return np.pi - 6 * np.arcsin(np.sin(angle) / n) + 2 * angle
 
-def secondaryElevation(n):
+def primaryElevation(n):
     angle = np.arcsin(((4 - n ** 2) / 3) ** 0.5)
     return 4 * np.arcsin(np.sin(angle) / n) - 2 * angle
 
@@ -43,18 +44,19 @@ def drawCurve(freq, alpha):
     eps1 = primaryElevation(n)
     eps2 = secondaryElevation(n)
 
-    x1, y1 = getCircleCoords(eps1, alpha, colour)
-    x2, y2 = getCircleCoords(eps2, alpha, colour)
+    x1, y1 = getCircleCoords(eps1, alpha) # Primary
+    x2, y2 = getCircleCoords(eps2, alpha) # Secondary
 
-    ax.plot(x1, y1, color = colour, linewidth = 1)
-    ax.plot(x2, y2, color = colour, linewidth = 1)
+    ax.plot(x1, y1, color = colour, linewidth = LW)
+    ax.plot(x2, y2, color = colour, linewidth = LW)
 
 def getCircleCoords(eps, alp):
     theta = np.linspace(0, 2 * np.pi, 360)
     radius = R * np.sin(eps) * np.cos(alp)
-    centre_y = R * np.sin(eps - alp) + H - R * np.sin(eps) * np.cos(alp)
+    centre_y = -(R * np.sin(eps) * np.cos(alp) - R * np.sin(eps - alp) - H)
+    # R * np.sin(eps - alp) + H - R * np.sin(eps) * np.cos(alp)
     x = radius * np.cos(theta)
-    y = centre_y * np.sin(theta)
+    y = centre_y + radius * np.sin(theta)
     mask = y >= 0
     x = x[mask]
     y = y[mask]
@@ -70,13 +72,18 @@ def findLimits(solar_angle):
     n = findIndexWater(max_freq)
     eps2 = secondaryElevation(n)
     x_coords, y_coords = getCircleCoords(eps2, solar_angle)
-    return 
+    return x_coords.max(), y_coords.max()
 
 def update(val):
     solar_deg = solar_slider.val
     solar_rad = np.deg2rad(solar_deg)
     ax.clear()
     ax.set_title("Primary and Secondary Rainbows")
+    x_lim, y_lim = findLimits(solar_rad)
+    ax.set_xlim(-x_lim*1.1, x_lim*1.1)
+    ax.set_ylim(0, x_lim*1.1)
+    ax.set_xticks([])
+    ax.set_yticks([])
     
     drawRainbows(solar_rad)
 
@@ -84,16 +91,22 @@ def update(val):
 fig, ax = plt.subplots()
 plt.subplots_adjust(bottom = 0.25) # Give space for slider
 ax.set_title("Primary and Secondary Rainbows")
-# MAY NEED TO SET AXIS LIMITS HERE
-ax.set_ylim(0, 1000)
 ax.set_aspect('equal')
+ax.set_xticks([])
+ax.set_yticks([])
 ax.spines[['top', 'right', 'left', 'bottom']].set_visible(False) # Make all border invisible
 
 # Slider
 init_angle = 5
 solar_ax = plt.axes([0.25, 0.1, 0.65, 0.03])
-solar_slider = Slider(solar_ax, 'Solar Angle', 5, 50, valinit=init_angle, valstep=1)
+solar_slider = Slider(solar_ax, 'Solar Angle', 0, 42, valinit=init_angle, valstep=1)
 
+# Set limits
+x_lim, y_lim = findLimits(np.deg2rad(init_angle))
+ax.set_xlim(-x_lim*1.1, x_lim*1.1)
+ax.set_ylim(0, x_lim*1.1)
+
+# Draw rainbow
 drawRainbows(np.deg2rad(init_angle))
 
 solar_slider.on_changed(update)
