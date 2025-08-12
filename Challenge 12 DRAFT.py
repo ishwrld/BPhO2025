@@ -42,7 +42,7 @@ def draw_triangle(alpha, theta_i):
     normal_vec = np.array([side_vec[1], -side_vec[0]])
     normal_vec = normal_vec / np.linalg.norm(normal_vec)
 
-
+    # Draw short dotted normal at midpoint
     normal_length = 0.4
     p_normal_start = midpoint - normal_vec * normal_length / 2
     p_normal_end = midpoint + normal_vec * normal_length / 2
@@ -71,12 +71,6 @@ def draw_triangle(alpha, theta_i):
     theta_t = np.rad2deg(theta_t_rad)
 
     delta = theta_i + theta_t - alpha
-
-    delta1 = theta_i - (np.arcsin((1*np.sin(theta_i))/n))
-    r2 = alpha_init - (theta_i - delta1)
-    
-    delta2 = theta_t  - r2
-    
 
     ax.set_title(f"Theta = {theta_i:.1f} , Alpha = {alpha:.1f}", color="white")
 

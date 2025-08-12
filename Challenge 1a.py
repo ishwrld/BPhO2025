@@ -28,4 +28,6 @@ def challenge1A():
     plt.ylabel("Refractive index, n")
     plt.show()
 
+
+
 challenge1A()
