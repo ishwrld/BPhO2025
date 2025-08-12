@@ -1,20 +1,30 @@
 import matplotlib.pyplot as plt
 import numpy as np  
 
-def formula(frequency):
+def findIndexWater(frequency):
     return (1 + (1 / (1.731 - (0.261 * frequency * 10 ** -3) ** 2)) ** 0.5) ** 0.5
 
-def primaryReflectance(angle, n):
-    return 180 - 6 * np.rad2deg(np.arcsin(np.sin(np.deg2rad(angle)) / n)) + 2 * angle
+# def primaryReflectance(angle, n):
+#     return 180 - 6 * np.rad2deg(np.arcsin(np.sin(np.deg2rad(angle)) / n)) + 2 * angle
 
-def secondaryReflectance(angle, n):
-    return 4 * np.rad2deg(np.arcsin(np.sin(np.deg2rad(angle)) / n)) - 2 * angle
+# def secondaryReflectance(angle, n):
+#     return 4 * np.rad2deg(np.arcsin(np.sin(np.deg2rad(angle)) / n)) - 2 * angle
+
+# def primaryMinimum(n):
+#     return primaryReflectance(np.rad2deg(np.arcsin(((9 - n ** 2) / 8) ** 0.5)),n)
+
+# def secondaryMinimum(n):
+#     return secondaryReflectance(np.rad2deg(np.arcsin(((4 - n ** 2) / 3) ** 0.5)), n)
 
 def primaryMinimum(n):
-    return primaryReflectance(np.rad2deg(np.arcsin(((9 - n ** 2) / 8) ** 0.5)),n)
+    angle = np.arcsin(((9 - n ** 2) / 8) ** 0.5)
+    rad = np.pi - 6 * np.arcsin(np.sin(angle) / n) + 2 * angle
+    return np.rad2deg(rad)
 
 def secondaryMinimum(n):
-    return secondaryReflectance(np.rad2deg(np.arcsin(((4 - n ** 2) / 3) ** 0.5)), n)
+    angle = np.arcsin(((4 - n ** 2) / 3) ** 0.5)
+    rad = 4 * np.arcsin(np.sin(angle) / n) - 2 * angle
+    return np.rad2deg(rad)
 
 def chooseColour(freq):
     if freq < 405:  # Lower than red
@@ -37,7 +47,7 @@ def chooseColour(freq):
         return [np.nan, np.nan, np.nan]  
 
 frequencies = np.linspace(400, 750, 350)
-indexes = formula(frequencies)
+indexes = findIndexWater(frequencies)
 primary = primaryMinimum(indexes)
 secondary = secondaryMinimum(indexes)
 colour = np.array([chooseColour(f) for f in frequencies])

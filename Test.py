@@ -75,4 +75,18 @@ def plot_model(solar_elevations):
 # Solar elevations to model
 solar_elevations = [5, 20, 30, 40]
 
-plot_model(solar_elevations)
+# plot_model(solar_elevations)
+
+R = 200
+H = 20
+
+def get_xlim(eps, alp):
+    return (-np.cos(eps) * np.sin(alp) *  
+            (R ** 2 * np.sin(eps - alp) + 2 * H * R) + H ** 2) ** 0.5
+
+def get_xlim2(eps, alp):
+    return (R ** 2 * np.sin(eps - alp) * np.sin(eps + alp) + 
+            2 * H * R * np.cos(eps) * np.sin(alp) - H ** 2) ** 0.5
+
+print(get_xlim(np.deg2rad(42),np.deg2rad(10)))
+print(get_xlim2(np.deg2rad(42),np.deg2rad(10)))
