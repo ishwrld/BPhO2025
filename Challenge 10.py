@@ -49,7 +49,7 @@ def create_virtual(pobject_extent):
         map_x, map_y,
         c = COLOURS,
         marker = ',', 
-        s = 5,  # Size of each point
+        s = 9,  # Size of each point
         edgecolors = "none",
         zorder = 1
     )
