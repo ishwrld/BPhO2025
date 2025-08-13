@@ -150,5 +150,6 @@ rays1 = draw_rays(object_coord[0], object_extent[3])
 fig.canvas.mpl_connect('button_press_event', on_press)
 fig.canvas.mpl_connect('button_release_event', on_release)
 fig.canvas.mpl_connect('motion_notify_event', on_motion)
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

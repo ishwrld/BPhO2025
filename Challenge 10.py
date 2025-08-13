@@ -86,5 +86,6 @@ object_extent = [object_coord[0] - SCALE_W / 2,    # left
 # Show object and virtual images and rays
 object_shown = ax.imshow(OBJECT, extent = object_extent, zorder = 5)
 virtual_shown = create_virtual(object_extent)
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

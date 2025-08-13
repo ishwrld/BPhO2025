@@ -65,4 +65,6 @@ def update(val):
 c1_slider.on_changed(update)
 c2_slider.on_changed(update)
 plt.subplots_adjust(wspace=0.3)
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

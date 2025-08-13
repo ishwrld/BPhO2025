@@ -67,5 +67,6 @@ ax.annotate("Primary Rainbow", (415,42.35))
 ax.annotate("Secondary Rainbow", (600, 50.15))
 
 ax.grid(True, dashes = [1,1], alpha = 0.25)
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

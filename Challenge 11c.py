@@ -61,4 +61,6 @@ ax.annotate("Critical angle", (415,48.5))
 ax.annotate("Primary", (415,45.4))
 ax.annotate("Secondary", (415, 40.7))
 ax.grid(True, dashes = [1,1], alpha = 0.25)
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

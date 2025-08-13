@@ -38,6 +38,7 @@ ax.set_ylim(n.min(), n.max())
 ax.set_title("Refractive index of water")
 ax.set_xlabel("Frequency (THz)")
 ax.set_ylabel("Refractive index, n")
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()    
 

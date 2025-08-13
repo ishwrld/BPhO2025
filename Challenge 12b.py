@@ -128,7 +128,6 @@ def right():
     
     # Legend to the right of ax3
     ax3.legend(loc='center left', bbox_to_anchor=(1.1, 0.5))
-   
 
 # def update(val):
 #     ax1.clear()
@@ -145,7 +144,6 @@ alpha = 45
 freq = 542.5
 
 fig = plt.figure(figsize=(10, 5)) 
-
 
 # Subplots
 ax1 = plt.subplot2grid((2, 4), (0, 0), colspan=2)        # top left (2 columns wide)

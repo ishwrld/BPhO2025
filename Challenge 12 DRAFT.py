@@ -92,5 +92,6 @@ def update(val):
 
 slider_alpha.on_changed(update)
 slider_theta.on_changed(update)
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

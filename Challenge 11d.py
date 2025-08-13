@@ -123,5 +123,6 @@ drawRainbows(np.deg2rad(initAngle))
 solar_slider.on_changed(update)
 # range_slider.on_changed(update)
 # height_slider.on_changed(update)
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

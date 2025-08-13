@@ -20,6 +20,6 @@ plt.xlabel("1/u")
 plt.ylabel("1/v")
 plt.title("Thin lens")
 
-plt.show()
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()

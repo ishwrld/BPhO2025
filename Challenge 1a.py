@@ -26,6 +26,8 @@ def challenge1A():
     plt.title("Refractive Index of Crown Glass")
     plt.xlabel("Wavelength (nm)")
     plt.ylabel("Refractive index, n")
+    manager = plt.get_current_fig_manager()
+    manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
     plt.show()
 
 

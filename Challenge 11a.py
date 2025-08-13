@@ -88,6 +88,7 @@ ax.set_title("Primary and Secondary Rainbows")
 ax.set_xlabel("Incident Angle θ (degrees)")
 ax.set_ylabel("Reflected angle ε (degrees)")
 ax.grid(True, linestyle = '--', alpha = 0.4)
-
+manager = plt.get_current_fig_manager()
+manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()
 
