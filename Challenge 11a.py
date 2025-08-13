@@ -91,4 +91,3 @@ ax.grid(True, linestyle = '--', alpha = 0.4)
 manager = plt.get_current_fig_manager()
 manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
 plt.show()
-
