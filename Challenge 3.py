@@ -54,5 +54,5 @@ def update(val):
 
 slider.on_changed(update)
 manager = plt.get_current_fig_manager()
-manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
+manager.toolbar.pack_forget() 
 plt.show()
