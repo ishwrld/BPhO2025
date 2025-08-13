@@ -77,5 +77,5 @@ fig.canvas.mpl_connect('button_release_event', on_release)
 fig.canvas.mpl_connect('motion_notify_event', on_motion)
 
 manager = plt.get_current_fig_manager()
-manager.toolbar.pack_forget()  # Removes toolbar from Tkinter window
+manager.toolbar.pack_forget()  
 plt.show()
